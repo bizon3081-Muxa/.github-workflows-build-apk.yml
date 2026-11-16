@@ -18,11 +18,17 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-
-      - uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK packages
-        run: yes | sdkmanager "platform-tools" "platforms;android-34" "platforms;android-35" "build-tools;34.0.0" "build-tools;35.0.0"
+          
+      - name: Setup Android SDK
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          SM="$(find "$SDK/cmdline-tools" -name sdkmanager -type f | sort | tail -n 1)"
+          if [ -z "$SM" ]; then echo "sdkmanager not found"; exit 1; fi
+          yes | "$SM" --licenses > /dev/null || true
+          "$SM" "platform-tools" "platforms;android-34" "platforms;android-35" "build-tools;34.0.0" "build-tools;35.0.0"
+          dirname "$SM" >> "$GITHUB_PATH"
 
       - name: Create project files
         run: |
